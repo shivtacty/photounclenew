@@ -96,11 +96,14 @@ const ImageGallery = () => {
     setSelectedItems(updatedSelectedItems);
   };
 
+  const localData =localStorage.getItem('authToken')
+
+
   const handleSubmit = async () => {
     let data = new FormData();
     const formattedData = selectedItems.map(item => ({
       image_comments: item.comment,
-      clientid: 2899,
+      clientid: localData,
       google_image_id: item.google_image_id,
       google_image: item.google_image,
     }));
@@ -123,7 +126,6 @@ const ImageGallery = () => {
       console.log(error);
     }
   };
-  const localData =localStorage.getItem('authToken')
 
   
   const handleDeleteImage = async (imgId) => {
