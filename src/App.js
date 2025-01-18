@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Route, Routes } from 'react-router-dom' // Import HashRouter
 import { useDispatch, useSelector } from 'react-redux'
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
@@ -21,8 +21,7 @@ const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
- console.log(isAuthenticated);
- 
+  console.log(isAuthenticated);
   
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.href.split('?')[1])
@@ -39,7 +38,7 @@ const App = () => {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <BrowserRouter>
+    <HashRouter> {/* Change this to HashRouter */}
       <Suspense
         fallback={
           <div className="pt-3 text-center">
@@ -63,7 +62,7 @@ const App = () => {
           )}
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter> 
   )
 }
 
