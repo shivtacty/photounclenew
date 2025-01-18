@@ -2,16 +2,16 @@
   "name": "@coreui/coreui-free-react-admin-template",
   "version": "5.2.0",
   "description": "CoreUI Free React Admin Template",
-  "homepage": "https://shivtacty.github.io/photouncle",
+  "homepage": "https://github.com/shivtacty/photounclenew.git",
   "bugs": {
     "url": "https://shivtacty.github.io/photouncle/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:shivtacty/photouncle.git"
+    "url": "git@github.com:shivtacty/photounclenew.git"
   },
   "license": "MIT",
-  "author": "The CoreUI Team (https://shivtacty.github.io/photouncle)",
+  "author": "The CoreUI Team (https://github.com/shivtacty/photounclenew.git)",
   "scripts": {
     "build": "vite build",
     "lint": "eslint \"src/**/*.js\"",
