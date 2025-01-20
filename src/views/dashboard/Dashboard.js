@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import Carousel from 'react-bootstrap/Carousel';
 import {
   CCard,
   CCardBody,
@@ -25,9 +26,12 @@ import {
   CModalHeader,
   CModalFooter,
   CModalTitle,
+  CFormLabel,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilTrash } from '@coreui/icons';
+import { CardText } from 'react-bootstrap';
+
 
 const ImageGallery = () => {
   const [imagesData, setImageData] = useState([]);
@@ -38,8 +42,18 @@ const ImageGallery = () => {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  
+  const [showCarousel, setShowCarousel] = useState(false);
   const [imageToDelete, setImageToDelete] = useState(null);
+
+  const handleOpenCarousel = () => {
+    setShowCarousel(true);
+  };
+
+  const handleCloseCarousel = () => {
+    setShowCarousel(false);
+  };
+
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -63,7 +77,7 @@ const ImageGallery = () => {
         let response = await axios.get("https://photouncle.com/gateway/web/genie/parent-photouncle/v2/RetouchedPicsAPI");
         if (response.status === 200) {
           console.log(response.data);
-          
+
           setSelectedImages(response.data);
         }
       } catch (error) {
@@ -71,7 +85,7 @@ const ImageGallery = () => {
       }
     };
     fetchData();
-  }, [flag,deleteModalVisible]);
+  }, [flag, deleteModalVisible]);
 
   const handleCheckboxChange = (item) => {
     const updatedSelectedItems = [...selectedItems];
@@ -90,13 +104,17 @@ const ImageGallery = () => {
     }
   };
 
-  const handleCommentChange = (index, event) => {
-    const updatedSelectedItems = [...selectedItems];
-    updatedSelectedItems[index].comment = event.target.value;
+  const handleCommentChange = (itemId, event) => {
+    const updatedSelectedItems = selectedItems.map(item =>
+      item.google_image_id === itemId
+        ? { ...item, comment: event.target.value }
+        : item
+    );
     setSelectedItems(updatedSelectedItems);
   };
 
-  const localData =localStorage.getItem('authToken')
+
+  const localData = localStorage.getItem('authToken')
 
 
   const handleSubmit = async () => {
@@ -121,28 +139,28 @@ const ImageGallery = () => {
       const response = await axios.request(config);
       setFlag(true);
       console.log(response.data);
-      setShowSuccessToast(true); 
+      setShowSuccessToast(true);
     } catch (error) {
       console.log(error);
     }
   };
 
-  
+
   const handleDeleteImage = async (imgId) => {
     setImageToDelete(imgId);
     setDeleteModalVisible(true);
-    
+
     let data = new FormData();
 
     data.append('delete_image', imgId);
     data.append('clientid', localData);
-    
+
     // const updatedSelectedItems = selectedItems.filter((itemIndex) => itemIndex !== imgId);
     // const updatedSelectedImages = selectedImages.filter((image) => image.id !== selectedImages[imgId].id);
 
     // setSelectedItems(updatedSelectedItems);
     // setSelectedImages(updatedSelectedImages);
-console.log(flag);
+    console.log(flag);
 
     try {
       const config = {
@@ -151,14 +169,14 @@ console.log(flag);
         data: data,
       };
       const response = await axios.request(config);
-      if(response?.data?.status){
+      if (response?.data?.status) {
         console.log(response);
-        
-      
+
+
         console.log('Image deleted from server:', response.data);
         setFlag(true)
       }
-      
+
       // alert('Image deleted successfully');
     } catch (error) {
       console.error('Error deleting image:', error);
@@ -166,20 +184,36 @@ console.log(flag);
     }
   };
 
-  const handleDelete=()=>{
+  const handleDelete = () => {
     setDeleteModalVisible(false)
   }
+  const carouselRef = useRef(null);
+
+
+  // Handle clicks outside the carousel to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (carouselRef.current && !carouselRef.current.contains(event.target)) {
+        setShowCarousel(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="p-4">
-      <CTabs activeItemKey="total" style={{ border: '2px solid #ddd', borderRadius: '10px' }}>
-        <div className="fixed-tab-header">
-          <CTabList variant="tabs">
-            <CTab itemKey="total">
+    <div className="">
+      <CTabs activeItemKey="total" >
+        <div className="fixed-tab-header" >
+          <CTabList variant="tabs" className='d-flex justify-content-center w-100'  >
+            <CTab itemKey="total" className='tabname'>
               <span>Total Items</span>
               <CBadge color="info" className="ms-2">{imagesData.length}</CBadge>
             </CTab>
-            <CTab itemKey="selected">
+            <CTab itemKey="selected" className='tabname'>
               <span>Selected Items</span>
               <CBadge color="success" className="ms-2">{loading ? "" : selectedImages.length}</CBadge>
             </CTab>
@@ -188,7 +222,7 @@ console.log(flag);
 
         <CTabContent>
           <CTabPanel className="p-3" itemKey="total">
-          <div className="container mt-1">
+            <div className="container mt-1">
               <CRow className="text-center">
                 <CCol sm="4" className="mb-4">
                   <CCard className="shadow-sm border-0">
@@ -265,7 +299,7 @@ console.log(flag);
                   </CCard>
                 </CCol>
               </CRow>
-            </div>           
+            </div>
             {loading ? (
               <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
                 <CSpinner color="primary" />
@@ -274,73 +308,66 @@ console.log(flag);
             ) : (
               <CRow>
                 {imagesData.map((item, index) => (
-                  <CCol key={index} sm="6" md="4" lg="3" className="mb-4">
-                    <CCard
-                      className="shadow-sm border-0 position-relative"
-                      style={{
-                        overflow: 'hidden',
-                        transition: 'transform 0.3s, box-shadow 0.3s',
-                        cursor: 'pointer'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                        e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      <div className="position-relative">
-                        <a href={item?.image_url} target="_blank" rel="noopener noreferrer">
-                          <CImage
-                            className="img-fluid rounded"
-                            src={item?.image_url}
-                            style={{ width: '100%', objectFit: 'cover' }}
-                          />
-                        </a>
-                        <CFormCheck
-                          type="checkbox"
-                          checked={selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id)}
-                          onChange={() => handleCheckboxChange(item)}
-                          style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '10px',
-                            transform: 'scale(1.2)',
-                            cursor: 'pointer',
-                          }}
-                        />
-                      </div>
+  <CCol key={index} sm="6" md="4" lg="3" className="mb-4">
+    <CCard
+      className="shadow-sm border-0 position-relative"
+      style={{
+        overflow: 'hidden',
+        transition: 'transform 0.3s, box-shadow 0.3s',
+        cursor: 'pointer'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.05)';
+        e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
+      <div className="position-relative">
+        <a href={item?.image_url} target="_blank" rel="noopener noreferrer">
+          <CImage
+            className="img-fluid rounded"
+            src={item?.image_url}
+            style={{ width: '100%', objectFit: 'cover' }}
+          />
+        </a>
+        <CFormCheck
+          type="checkbox"
+          checked={selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id)}
+          onChange={() => handleCheckboxChange(item)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            transform: 'scale(1.2)',
+            cursor: 'pointer',
+          }}
+        />
+      </div>
 
-                      {selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id) && (
-                        <CCardBody>
-                          <CFormInput
-                            type="text"
-                            value={selectedItems.find(selectedItem => selectedItem.google_image_id === item.google_image_id)?.comment || ''}
-                            onChange={(event) => handleCommentChange(index, event)}
-                            placeholder="Add a comment"
-                          />
-                        </CCardBody>
-                      )}
-                    </CCard>
-                  </CCol>
-                ))}
+      {selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id) && (
+        <CCardBody>
+          <CFormInput
+            type="text"
+            value={selectedItems.find(selectedItem => selectedItem.google_image_id === item.google_image_id)?.comment || ''}
+            onChange={(event) => handleCommentChange(item.google_image_id, event)}
+            placeholder="Add a comment"
+          />
+        </CCardBody>
+      )}
+    </CCard>
+  </CCol>
+))}
+
               </CRow>
             )}
 
             {/* Submit Button */}
             <div
-              className="d-flex justify-content-center mt-4"
-              style={{
-                position: 'fixed',
-                bottom: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 1000,
-                width: '100%',
-                textAlign: 'center',
-              }}
+              className="d-flex justify-content-center mt-4 " id="submitbtn"
+
             >
               <CButton color="primary" onClick={handleSubmit}>
                 Submit Selected Items
@@ -360,7 +387,9 @@ console.log(flag);
             </CToast>
           )}
 
-<CTabPanel className="p-3" itemKey="selected">
+
+
+          <CTabPanel className="p-3" itemKey="selected">
             <CRow>
               {selectedImages.map((selectedIndex, index) => {
                 console.log(selectedIndex);
@@ -368,7 +397,7 @@ console.log(flag);
                 // const item = imagesData[selectedIndex];
                 return (
                   <CCol key={selectedIndex?.google_image_id} sm="6" md="4" lg="3" className="mb-4">
-                    <CCard className="shadow-sm border-0 position-relative">
+                    <CCard className="shadow-sm border-0 position-relative cursor-pointer">
                       <CIcon
                         icon={cilTrash}
                         className="position-absolute top-0 end-0 m-2"
@@ -386,8 +415,9 @@ console.log(flag);
                         onClick={() => handleDeleteImage(selectedIndex?.google_image_id)}
 
                       />
-                      <a href={selectedIndex.image_url} target="_blank" rel="noopener noreferrer">
+                      <a rel="noopener noreferrer">
                         <CImage
+                          onClick={handleOpenCarousel}
                           className="img-fluid rounded"
                           src={selectedIndex.image_url}
                           style={{ width: '100%', objectFit: 'cover' }}
@@ -407,54 +437,77 @@ console.log(flag);
                         >
                           {selectedIndex?.google_image}
                         </CCardText> */}
-                        <CFormInput
-                          className="mt-2"
-                          type="text"
-                          value={selectedIndex.comments}
-                          // onChange={(event) => handleCommentChange(index, event)}
-                          placeholder="Add a comment"
-                        />
+
+                        <CFormLabel >Comment:</CFormLabel>
+                        <CardText className="mt-2">
+                          {selectedIndex.comments}
+                        </CardText>
                       </CCardBody>
-                    </CCard>
+                    </CCard  >
                   </CCol>
                 );
               })}
 
-<CModal
-  visible={deleteModalVisible}
-  onClose={() => setDeleteModalVisible(false)}
-  alignment="center"
->
-  <CModalHeader closeButton>
-    <CModalTitle>Confirm Deletion</CModalTitle>
-  </CModalHeader>
-  <CModalBody>
-    Are you sure you want to delete this image?
-  </CModalBody>
-  <CModalFooter>
-    <CButton color="secondary" onClick={() => setDeleteModalVisible(false)}>
-      Cancel
-    </CButton>
-    <CButton
-      color="danger"
-      // onClick={() => {
-      //   if (imageToDelete) {
-      //     deleteImage(imageToDelete); 
-      //     setDeleteModalVisible(false); 
-      //   }
-      // }}
 
-      onClick={() => setDeleteModalVisible(false)}
-    >
-      Delete
-    </CButton>
-  </CModalFooter>
-</CModal>
+              <CModal
+                visible={deleteModalVisible}
+                onClose={() => setDeleteModalVisible(false)}
+                alignment="center"
+              >
+                <CModalHeader closeButton>
+                  <CModalTitle>Confirm Deletion</CModalTitle>
+                </CModalHeader>
+                <CModalBody>
+                  Are you sure you want to delete this image?
+                </CModalBody>
+                <CModalFooter>
+                  <CButton color="secondary" onClick={() => setDeleteModalVisible(false)}>
+                    Cancel
+                  </CButton>
+                  <CButton
+                    color="danger"
+                    // onClick={() => {
+                    //   if (imageToDelete) {
+                    //     deleteImage(imageToDelete); 
+                    //     setDeleteModalVisible(false); 
+                    //   }
+                    // }}
+
+                    onClick={() => setDeleteModalVisible(false)}
+                  >
+                    Delete
+                  </CButton>
+                </CModalFooter>
+              </CModal>
 
             </CRow>
           </CTabPanel>
         </CTabContent>
       </CTabs>
+
+      <div className="">
+
+        {showCarousel && (
+          <>
+            <div className="overlay" />
+            <div ref={carouselRef}>
+              <Carousel className="test1">
+                {selectedImages.map((item) => (
+                  <Carousel.Item key={item.google_image_id}>
+                    <CImage className="img-fluid rounded" src={item.image_url} />
+                    <Carousel.Caption>
+                      <h3>{item.google_image}</h3>
+                      <p>{item.comments}</p>
+                    </Carousel.Caption>
+                  </Carousel.Item>
+                ))}
+              </Carousel>
+            </div>
+          </>
+        )}
+      </div>
+
+
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom' // Import HashRoute
 import { useDispatch, useSelector } from 'react-redux'
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 // We use those styles to show code examples, you should remove them in your application.
 import './scss/examples.scss'
