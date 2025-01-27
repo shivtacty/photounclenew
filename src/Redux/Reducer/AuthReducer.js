@@ -7,12 +7,20 @@ const initialState = {
   error: null,
 };
 
+const storedUser = localStorage.getItem('authToken');
 
-// console.log(initialState);
+const initialStateWithLocalStorage = storedUser  ? {
+  isAuthenticated: true,
+  user: JSON.parse(storedUser),
+  error: null,
+} : initialState;
 
-const authReducer = (state = initialState, action) => {
+const authReducer = (state = initialStateWithLocalStorage, action) => {
+  
   switch (action.type) {
     case LOGIN_SUCCESS:
+      localStorage.setItem('authToken', JSON.stringify(action.payload.user));
+      
       return {
         ...state,
         isAuthenticated: true,
@@ -26,6 +34,8 @@ const authReducer = (state = initialState, action) => {
         error: action.error,
       };
     case LOGOUT:
+      localStorage.removeItem('authToken');
+      
       return {
         ...state,
         isAuthenticated: false,
