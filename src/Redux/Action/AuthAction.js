@@ -22,15 +22,16 @@ export const login = (userData) => {
 
       // Make the API request
       const response = await axios(config);
+      console.log(response);
       
-      if (response.status) {
+      if (response.data.status =="success") {
         const user = response.data.data;
         // const userId = response?.data?.pid;
 console.log(user);
 
 // console.log(userId);
 
-        localStorage.setItem('authToken', user.pid);
+localStorage.setItem('authToken',JSON.stringify(user) );
 
         dispatch({
           type: LOGIN_SUCCESS,

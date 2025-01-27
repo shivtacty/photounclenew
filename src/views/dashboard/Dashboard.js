@@ -45,22 +45,66 @@ const ImageGallery = () => {
   const [showCarousel, setShowCarousel] = useState(false);
   const [imageToDelete, setImageToDelete] = useState(null);
 
+  const [showDeleteTost, setShowDeleteTost] = useState(false)
+  const [message, setMessage] = useState('')
+
   const handleOpenCarousel = () => {
     setShowCarousel(true);
   };
 
-  const handleCloseCarousel = () => {
-    setShowCarousel(false);
-  };
+  // console.log(showSuccessToast);
+  
+  // const handleCloseCarousel = () => {
+  //   setShowCarousel(false);
+  // };
 
+
+  // //console.log(localstorageData)
+
+  const localData1 = localStorage.getItem('authToken')
+
+  const data = JSON.parse(localData1)
+
+  const localData = data?.pid
+  //console.log(localData);
+
+  useEffect(()=>{
+    console.log(showDeleteTost);
+    
+    if(showDeleteTost){
+      setTimeout(()=>{
+        setShowDeleteTost(false)
+
+      },5000)
+    }
+
+  },[showDeleteTost])
+
+  useEffect(()=>{
+    console.log(showSuccessToast);
+    
+    if(showSuccessToast){
+      setTimeout(()=>{
+        setShowSuccessToast(false)
+
+      },5000)
+    }
+
+  },[showSuccessToast])
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let response = await axios.get("https://photouncle.com/gateway/web/genie/parent-photouncle/v2/SelectPictureAPI");
+
+        let response = await axios.get(`https://plum-termite-772310.hostingersite.com/photouncle/api/selectedApi?email=${data.pemail}&name=${data.FirstName}&instituteid=${data.InstituteName}&pid=${data.pid}`);
+        // console.log(response);
+
         if (response.status === 200) {
-          setImageData(response.data);
+        
+          setImageData(response?.data?.data);
+        } else {
+          setImageData([])
         }
       } catch (error) {
         console.error('Error in fetchData:', error);
@@ -69,16 +113,25 @@ const ImageGallery = () => {
       }
     };
     fetchData();
-  }, [flag]);
+  }, [flag, deleteModalVisible]);
+
+  // console.log(imageToDelete);
 
   useEffect(() => {
+    setFlag(false);
+
     const fetchData = async () => {
       try {
-        let response = await axios.get("https://photouncle.com/gateway/web/genie/parent-photouncle/v2/RetouchedPicsAPI");
-        if (response.status === 200) {
-          console.log(response.data);
+        let response = await axios.get(`https://plum-termite-772310.hostingersite.com/photouncle/api/retouchedApi?email=${data.pemail}&name=${data.FirstName}&instituteid=${data.InstituteName}&pid=${data.pid}`);
+        // console.log(response);
 
-          setSelectedImages(response.data);
+        if (response.status === 200) {
+          //console.log(response.data);
+
+          setSelectedImages(response.data?.data);
+        } else {
+          setSelectedImages([]);
+
         }
       } catch (error) {
         console.error('Error in fetchData:', error);
@@ -114,7 +167,6 @@ const ImageGallery = () => {
   };
 
 
-  const localData = localStorage.getItem('authToken')
 
 
   const handleSubmit = async () => {
@@ -131,66 +183,69 @@ const ImageGallery = () => {
     let config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: 'https://photouncle.com/gateway/web/genie/parent-photouncle/v2/ImageInsertApi.php',
+      url: 'https://plum-termite-772310.hostingersite.com/photouncle/api/ImageInsertApi',
       data: data
     };
 
     try {
       const response = await axios.request(config);
-      setFlag(true);
-      console.log(response.data);
-      setShowSuccessToast(true);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+      // console.log(response);
 
-
-  const handleDeleteImage = async (imgId) => {
-    setImageToDelete(imgId);
-    setDeleteModalVisible(true);
-
-    let data = new FormData();
-
-    data.append('delete_image', imgId);
-    data.append('clientid', localData);
-
-    // const updatedSelectedItems = selectedItems.filter((itemIndex) => itemIndex !== imgId);
-    // const updatedSelectedImages = selectedImages.filter((image) => image.id !== selectedImages[imgId].id);
-
-    // setSelectedItems(updatedSelectedItems);
-    // setSelectedImages(updatedSelectedImages);
-    console.log(flag);
-
-    try {
-      const config = {
-        method: 'post',
-        url: 'https://photouncle.com/gateway/web/genie/parent-photouncle/v2/ImageDeleteApi.php',
-        data: data,
-      };
-      const response = await axios.request(config);
-      if (response?.data?.status) {
-        console.log(response);
-
-
-        console.log('Image deleted from server:', response.data);
-        setFlag(true)
+      if (response.data.status) {
+        // console.log(response.data.data);
+        setFlag(true);
+        setShowSuccessToast(true);
       }
 
-      // alert('Image deleted successfully');
     } catch (error) {
-      console.error('Error deleting image:', error);
-      alert('Error deleting image');
+      //console.log(error);
     }
   };
 
-  const handleDelete = () => {
-    setDeleteModalVisible(false)
-  }
+  // console.log(flag);
+
+
+  const handleDelete = async () => {
+    setDeleteModalVisible(false);
+
+    if (imageToDelete) {
+      let data = new FormData();
+      data.append('delete_image', imageToDelete);
+      data.append('clientid', localData);
+
+      try {
+        const config = {
+          method: 'post',
+          url: 'https://plum-termite-772310.hostingersite.com/photouncle/api/ImageDeleteApi',
+          data: data,
+        };
+        const response = await axios.request(config);
+        // console.log(response.data);
+
+        if (response?.data?.status) {
+          // console.log('Image deleted successfully:', response.data);
+          setMessage(response?.data?.message)
+          setShowDeleteTost(true)
+          setFlag(true);
+        } else {
+          console.error('Failed to delete image');
+        }
+      } catch (error) {
+        console.error('Error deleting image:', error);
+      }
+    }
+  };
+  // console.log(message);
+
+
+  const handleDeleteImage = (imgId) => {
+    setImageToDelete(imgId);
+    setDeleteModalVisible(true);
+  };
+
   const carouselRef = useRef(null);
 
 
-  // Handle clicks outside the carousel to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (carouselRef.current && !carouselRef.current.contains(event.target)) {
@@ -211,11 +266,11 @@ const ImageGallery = () => {
           <CTabList variant="tabs" className='d-flex justify-content-center w-100'  >
             <CTab itemKey="total" className='tabname'>
               <span>Total Items</span>
-              <CBadge color="info" className="ms-2">{imagesData.length}</CBadge>
+              <CBadge color="info" className="ms-2">{imagesData ? imagesData?.length : ""}</CBadge>
             </CTab>
             <CTab itemKey="selected" className='tabname'>
               <span>Selected Items</span>
-              <CBadge color="success" className="ms-2">{loading ? "" : selectedImages.length}</CBadge>
+              <CBadge color="success" className="ms-2">{selectedImages ? selectedImages.length : ''}</CBadge>
             </CTab>
           </CTabList>
         </div>
@@ -307,59 +362,62 @@ const ImageGallery = () => {
               </div>
             ) : (
               <CRow>
-                {imagesData.map((item, index) => (
-  <CCol key={index} sm="6" md="4" lg="3" className="mb-4">
-    <CCard
-      className="shadow-sm border-0 position-relative"
-      style={{
-        overflow: 'hidden',
-        transition: 'transform 0.3s, box-shadow 0.3s',
-        cursor: 'pointer'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.05)';
-        e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      <div className="position-relative">
-        <a href={item?.image_url} target="_blank" rel="noopener noreferrer">
-          <CImage
-            className="img-fluid rounded"
-            src={item?.image_url}
-            style={{ width: '100%', objectFit: 'cover' }}
-          />
-        </a>
-        <CFormCheck
-          type="checkbox"
-          checked={selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id)}
-          onChange={() => handleCheckboxChange(item)}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            transform: 'scale(1.2)',
-            cursor: 'pointer',
-          }}
-        />
-      </div>
+                {imagesData ? imagesData?.map((item, index) => (
+                  <CCol key={index} sm="6" md="4" lg="3" className="mb-4">
+                    <CCard
+                      className="shadow-sm border-0 position-relative"
+                      style={{
+                        overflow: 'hidden',
+                        transition: 'transform 0.3s, box-shadow 0.3s',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div className="position-relative">
+                        <a href={item?.image_url} target="_blank" rel="noopener noreferrer">
+                          <CImage
+                            className="img-fluid rounded"
+                            src={item?.image_url}
+                            style={{ width: '100%', objectFit: 'cover' }}
+                          />
+                        </a>
+                        <CFormCheck
+                          type="checkbox"
+                          checked={selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id)}
+                          onChange={() => handleCheckboxChange(item)}
+                          style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            transform: 'scale(1.2)',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </div>
 
-      {selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id) && (
-        <CCardBody>
-          <CFormInput
-            type="text"
-            value={selectedItems.find(selectedItem => selectedItem.google_image_id === item.google_image_id)?.comment || ''}
-            onChange={(event) => handleCommentChange(item.google_image_id, event)}
-            placeholder="Add a comment"
-          />
-        </CCardBody>
-      )}
-    </CCard>
-  </CCol>
-))}
+                      {selectedItems.some(selectedItem => selectedItem.google_image_id === item.google_image_id) && (
+                        <CCardBody>
+                          <CFormInput
+                            type="text"
+                            value={selectedItems.find(selectedItem => selectedItem.google_image_id === item.google_image_id)?.comment || ''}
+                            onChange={(event) => handleCommentChange(item.google_image_id, event)}
+                            placeholder="Add a comment"
+                          />
+                        </CCardBody>
+                      )}
+                    </CCard>
+                  </CCol>
+                )) : <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+                  <CSpinner color="primary" />
+                  <span className="ms-2">No Data</span>
+                </div>}
 
               </CRow>
             )}
@@ -377,22 +435,40 @@ const ImageGallery = () => {
 
           {/* Success Toast */}
           {showSuccessToast && (
-            <CToast autohide={true} visible={showSuccessToast} color="success" className="position-fixed top-0 end-0 m-3">
-              <CToastHeader closeButton>
+            <CToast autohide={true} visible={showSuccessToast} color="success" className="position-fixed top-0 end-0 m-3" style={{ zIndex: '9999' }}>
+              {/* <CToastHeader closeButton>
                 <strong className="me-auto">Success</strong>
-              </CToastHeader>
+              </CToastHeader> */}
               <CToastBody>
                 The selected items have been successfully submitted!
+              </CToastBody>
+            </CToast>
+          )}
+          {showDeleteTost && (
+            <CToast autohide={true} visible={showDeleteTost} color="danger" className="position-fixed top-0 end-0 m-3" style={{ zIndex: '9999' }}>
+
+              <CToastBody>
+                {message}
               </CToastBody>
             </CToast>
           )}
 
 
 
+          {/* {showSuccessoast && (
+            <CToast autohide={true} visible={showSuccessToast} color="success" className="position-fixed top-0 end-0 m-3" style={{zIndex:'9999'}}>
+              
+              <CToastBody>
+               {message}
+              </CToastBody>
+            </CToast>
+          )} */}
+
+
           <CTabPanel className="p-3" itemKey="selected">
             <CRow>
               {selectedImages.map((selectedIndex, index) => {
-                console.log(selectedIndex);
+                //console.log(selectedIndex);
 
                 // const item = imagesData[selectedIndex];
                 return (
@@ -464,17 +540,7 @@ const ImageGallery = () => {
                   <CButton color="secondary" onClick={() => setDeleteModalVisible(false)}>
                     Cancel
                   </CButton>
-                  <CButton
-                    color="danger"
-                    // onClick={() => {
-                    //   if (imageToDelete) {
-                    //     deleteImage(imageToDelete); 
-                    //     setDeleteModalVisible(false); 
-                    //   }
-                    // }}
-
-                    onClick={() => setDeleteModalVisible(false)}
-                  >
+                  <CButton color="danger" onClick={handleDelete}>
                     Delete
                   </CButton>
                 </CModalFooter>

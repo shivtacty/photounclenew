@@ -23,6 +23,9 @@ const App = () => {
   const storedTheme = useSelector((state) => state.theme)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   console.log(isAuthenticated);
+  const localstorageData =localStorage.getItem('authToken') 
+  const data =JSON.parse(localstorageData)
+  console.log(localstorageData)
   
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.href.split('?')[1])
@@ -38,6 +41,8 @@ const App = () => {
     setColorMode(storedTheme)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  console.log(data)
+  
   return (
     <HashRouter> {/* Change this to HashRouter */}
       <Suspense
@@ -48,19 +53,20 @@ const App = () => {
         }
       >
         <Routes>
-          {isAuthenticated ? (
-            <>
-              <Route path="*" name="Home" element={<DefaultLayout />} />
-              {/* <Route path="/dashboard" name="dashboard" element={<Dashboard />} /> */}
-            </>
-          ) : (
+          {data == null ?(
             <>
               <Route exact path="/" name="Login Page" element={<Login />} />
+              {/* <Route exact path="*" name="Login Page" element={<Login />} /> */}
               <Route exact path="/register" name="Register Page" element={<Register />} />
               <Route exact path="/404" name="Page 404" element={<Page404 />} />
               <Route exact path="/500" name="Page 500" element={<Page500 />} />
             </>
-          )}
+          ): (
+            <>
+              <Route path="*" name="Home" element={<DefaultLayout />} />
+              {/* <Route path="/dashboard" name="dashboard" element={<Dashboard />} /> */}
+            </>
+          )  }
         </Routes>
       </Suspense>
     </HashRouter> 

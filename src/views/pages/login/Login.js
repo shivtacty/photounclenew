@@ -72,6 +72,8 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                       />
                     </CInputGroup> */}
+                    {error? <CRow> <p className="text-danger">{error}</p></CRow>:  ""}
+
                     <CRow>
                       <CCol xs={6}>
                         <CButton color="primary" className="px-4" onClick={handleLogin}>
